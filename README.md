@@ -18,7 +18,7 @@ driver:
   name: docker
 platforms:
   - name: instance
-    image: docker.pkg.github.com/molecule-ubuntu:latest
+    image: docker.pkg.github.com/avnes/molecule-ubuntu:latest
     pre_build_image: true
 provisioner:
   name: ansible
