@@ -96,10 +96,3 @@ jobs:
 
           docker tag ${{ steps.get-image-name.outputs.image_name }} $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-          
-      - name: Create software bill of materials when releasing
-        uses: anchore/sbom-action@v0
-        with:
-          image: "${{ steps.get-image-name.outputs.image_name }}"
-          artifact-name: "${{ steps.get-image-name.outputs.image_name }}-sbom.spdx"
-        if: github.event_name == 'release'
