@@ -12,15 +12,12 @@ on:
   
   workflow_dispatch:
 
-env:
-  IMAGE_NAME: molecule-ubuntu
-
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get image name
+      - name: Dynamically find the image name
         id: get-image-name
         run: |
           image_name=$(echo $GITHUB_REPOSITORY | cut -d '/' -f2 | sed -r 's/docker-//')
@@ -53,7 +50,6 @@ jobs:
           sarif_file: ${{ steps.scan.outputs.sarif }}
 
   push:
-    # Ensure test job passes before pushing image.
     needs: test
 
     runs-on: ubuntu-latest
@@ -64,17 +60,24 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Dynamically find the image name
+        id: get-image-name
+        run: |
+          image_name=$(echo $GITHUB_REPOSITORY | cut -d '/' -f2 | sed -r 's/docker-//')
+          echo "::set-output name=image_name::$image_name"
+          
+      - name: Checkout source code
+        uses: actions/checkout@v2
 
       - name: Build image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+        run: docker build . --file Dockerfile --tag ${{ steps.get-image-name.outputs.image_name }}
 
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push image
         run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/${{ steps.get-image-name.outputs.image_name }}
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
@@ -91,12 +94,12 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker tag ${{ steps.get-image-name.outputs.image_name }} $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
           
       - name: Create software bill of materials when releasing
         uses: anchore/sbom-action@v0
         with:
-          image: "${{ env.IMAGE_NAME }}"
-          artifact-name: "${{ env.IMAGE_NAME }}-sbom.spdx"
+          image: "${{ steps.get-image-name.outputs.image_name }}"
+          artifact-name: "${{ steps.get-image-name.outputs.image_name }}-sbom.spdx"
         if: github.event_name == 'release'
