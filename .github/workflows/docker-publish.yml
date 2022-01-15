@@ -20,7 +20,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Get image name
+        id: get-image-name
+        run: |
+          image_name=$(echo $GITHUB_REPOSITORY | cut -d '/' -f2 | sed -r 's/docker-//')
+          echo "::set-output name=image_name::$image_name"
+        
+      - name: Checkout source code
+        uses: actions/checkout@v2
 
       - name: Run tests
         run: |
@@ -28,14 +35,14 @@ jobs:
             docker-compose --file docker-compose.test.yml build
             docker-compose --file docker-compose.test.yml run sut
           else
-            docker build . --file Dockerfile --tag $IMAGE_NAME
+            docker build . --file Dockerfile --tag ${{ steps.get-image-name.outputs.image_name }}
           fi
           
       - name: Run the Anchore scan action itself with GitHub Advanced Security code scanning integration enabled
         uses: anchore/scan-action@v3
         id: scan
         with:
-          image: "${{ env.IMAGE_NAME }}"
+          image: "${{ steps.get-image-name.outputs.image_name }}"
           acs-report-enable: true
           fail-build: false
           severity-cutoff: high
