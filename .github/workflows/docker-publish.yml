@@ -37,7 +37,7 @@ jobs:
         id: scan
         with:
           #image: "localbuild/testimage:latest"
-          image: "{{ env.IMAGE_NAME }}"
+          image: "${{ env.IMAGE_NAME }}"
           acs-report-enable: true
           fail-build: false
           severity-cutoff: high
