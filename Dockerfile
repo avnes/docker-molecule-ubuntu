@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:lunar-20230731
 
 ENV DEBIAN_FRONTEND noninteractive
 
