@@ -1,4 +1,4 @@
-FROM ubuntu:lunar-20230731
+FROM ubuntu:lunar-20231004
 
 ENV DEBIAN_FRONTEND noninteractive
 
